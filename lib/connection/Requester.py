@@ -23,6 +23,7 @@ import http.client
 import urllib.request
 import urllib.parse
 import urllib.error
+from urllib.parse import urlparse
 
 import thirdparty.requests as requests
 from .Response import *
@@ -41,7 +42,7 @@ class Requester(object):
         }
 
     def __init__(self, url, cookie=None, useragent=None, maxPool=1, maxRetries=5, timeout=30, ip=None, proxy=None,
-                 redirect=False):
+                 redirect=False, sameDomain=True):
         # if no backslash, append one
         if not url.endswith('/'):
             url = url + '/'
@@ -85,9 +86,20 @@ class Requester(object):
         self.proxy = proxy
         self.redirect = redirect
         self.randomAgents = None
+        self.sameDomain = sameDomain
 
     def setHeader(self, header, content):
         self.headers[header] = content
+
+    def getDomain(self,url):
+        urlp = urlparse(url)
+        domain = urlp.netloc.split('@')[-1]
+        if domain.rfind(':') == -1:
+            if urlp.scheme=='http':
+                domain+=':80'
+            elif urlp.scheme=='https':
+                domain+=':443'
+        return "%s://%s"%(urlp.scheme,domain)
 
     def setRandomAgents(self, agents):
         self.randomAgents = list(agents)
@@ -95,10 +107,15 @@ class Requester(object):
     def unsetRandomAgents(self):
         self.randomAgents = None
 
+    def getDirPath(self, path):
+        if path.find(self.basePath)==0:
+            return path[len(self.basePath):]
+        else:
+            return path
     def request(self, path):
         i = 0
         proxy = None
-        result = None
+        result = []
         while i <= self.maxRetries:
             try:
                 if self.proxy is not None:
@@ -120,10 +137,22 @@ class Requester(object):
                 # include port in Host header if it's non-standard
                 if (self.protocol == "https" and self.port != 443) or (self.protocol == "http" and self.port != 80):
                     headers["Host"]+=":{0}".format(self.port)
-
-                response = requests.get(url, proxies=proxy, verify=False, allow_redirects=self.redirect, \
+                # if '/Joomla/' in url:
+                #     print(url,proxy,headers,self.timeout)
+                response = requests.get(url, proxies=proxy, verify=False, allow_redirects=False, \
                                         headers=headers, timeout=self.timeout)
-                result = Response(response.status_code, response.reason, response.headers, response.content)
+                if self.redirect and response.status_code in [301, 302, 307]:
+                    domain = self.getDomain(url)
+                    current_domain = self.getDomain(response.headers['Location'])
+                    #print(domain,current_domain)
+                    if self.sameDomain and (current_domain=='' or domain==current_domain):
+                        response = requests.get(url, proxies=proxy, verify=False, allow_redirects=True, \
+                                            headers=headers, timeout=self.timeout)
+                response_list = response.history+[response]
+                for response_one in response_list:
+                    response_path = urlparse(response_one.url).path
+                    if response_path.replace('/','') !='':
+                        result.append(Response(self.getDirPath(response_path), response_one.status_code, response_one.reason, response_one.headers, response_one.content))
                 del headers
                 break
             except requests.exceptions.TooManyRedirects as e:
@@ -133,7 +162,7 @@ class Requester(object):
                     raise RequestException({'message': 'Error with the proxy: {0}'.format(e)})
                 continue
             except (requests.exceptions.ReadTimeout, requests.exceptions.Timeout, http.client.IncompleteRead, \
-                    socket.timeout):
+                    socket.timeout,requests.exceptions.InvalidSchema):
                 continue
             finally:
                 i = i + 1

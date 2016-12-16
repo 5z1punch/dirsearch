@@ -128,6 +128,7 @@ class ArgumentParser(object):
         else:
             self.excludeSubdirs = None
         self.redirect = options.noFollowRedirects
+        self.sameDomain = options.sameDomain
 
     def parseConfig(self):
         config = DefaultConfigParser()
@@ -138,6 +139,7 @@ class ArgumentParser(object):
         self.threadsCount = config.safe_getint("general", "threads", 10, list(range(1, 50)))
         self.excludeStatusCodes = config.safe_get("general", "exclude-status", None)
         self.redirect = config.safe_getboolean("general", "follow-redirects", False)
+        self.sameDomain = config.safe_getboolean("general", "same-domain", True)
         self.recursive = config.safe_getboolean("general", "recursive", False)
         self.testFailPath = config.safe_get("general", "scanner-fail-path", "").strip()
         self.saveHome = config.safe_getboolean("general", "save-logs-home", False)
@@ -164,6 +166,7 @@ class ArgumentParser(object):
         # Mandatory arguments
         mandatory = OptionGroup(parser, 'Mandatory')
         mandatory.add_option('-u', '--url', help='URL target', action='store', type='string', dest='url', default=None)
+        mandatory.add_option('--same-domain', help='Only followe the redirects under the same domain [This option cant be modified, it\'s allways True. If you want to change it, please modified the source code. But it will result in an unexpected bug.]',action='store_true',dest='sameDomain',default=self.sameDomain)
         mandatory.add_option('-L', '--url-list', help='URL list target', action='store', type='string', dest='urlList',
                              default=None)
         mandatory.add_option('-e', '--extensions', help='Extension list separated by comma (Example: php,asp)',

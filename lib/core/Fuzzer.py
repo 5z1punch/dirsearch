@@ -106,11 +106,14 @@ class Fuzzer(object):
         self.play()
 
     def scan(self, path):
-        response = self.requester.request(path)
-        result = None
-        if self.getScannerFor(path).scan(path, response):
-            result = (None if response.status == 404 else response.status)
-        return result, response
+        responses= self.requester.request(path)
+        scanResultList = []
+        for response in responses:
+            result = None
+            if self.getScannerFor(path).scan(path, response):
+                result = (None if response.status == 404 else response.status)
+            scanResultList.append({"status":result,"response":response})
+        return scanResultList
 
     def isRunning(self):
         return self.running
@@ -125,23 +128,32 @@ class Fuzzer(object):
     def stopThread(self):
         self.runningThreadsCount -= 1
 
+    def searchMatches(self, Path):
+        for matche in self.matches:
+            if matche.path == Path.path:
+                return True
+        return False
     def thread_proc(self):
         self.playEvent.wait()
         try:
             path = next(self.dictionary)
             while path is not None:
                 try:
-                    status, response = self.scan(path)
-                    result = Path(path=path, status=status, response=response)
-                    if status is not None:
-                        self.matches.append(result)
-                        for callback in self.matchCallbacks:
-                            callback(result)
-                    else:
-                        for callback in self.notFoundCallbacks:
-                            callback(result)
-                    del status
-                    del response
+                    scanResultList = self.scan(path)
+                    for scanResult in scanResultList:
+                        status = scanResult['status']
+                        response = scanResult['response']
+                        result = Path(path=response.path, status=status, response=response)
+                        if status is not None:
+                            if not self.searchMatches(result):
+                                self.matches.append(result)
+                                for callback in self.matchCallbacks:
+                                    callback(result)
+                        else:
+                            for callback in self.notFoundCallbacks:
+                                callback(result)
+                        del status
+                        del response
                 except RequestException as e:
                     for callback in self.errorCallbacks:
                         callback(path, e.args[0]['message'])

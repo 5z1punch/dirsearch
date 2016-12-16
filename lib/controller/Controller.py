@@ -78,7 +78,7 @@ class Controller(object):
         self.excludeSubdirs = (arguments.excludeSubdirs if arguments.excludeSubdirs is not None else [])
         self.output.header(PROGRAM_BANNER)
         self.dictionary = Dictionary(self.arguments.wordlist, self.arguments.extensions,
-                                     self.arguments.lowercase, self.arguments.forceExtensions)
+                                     self.arguments.lowercase, self.arguments.forceExtensions, self.arguments.recursive)
         self.printConfig()
         self.errorLog = None
         self.errorLogPath = None
@@ -329,6 +329,8 @@ class Controller(object):
             return False
         if path.endswith('/'):
             if path in [directory + '/' for directory in self.excludeSubdirs]:
+                return False
+            if self.currentDirectory + path in self.directories.queue:
                 return False
             self.directories.put(self.currentDirectory + path)
             return True

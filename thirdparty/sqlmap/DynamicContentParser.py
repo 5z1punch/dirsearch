@@ -25,7 +25,7 @@ class DynamicContentParser:
         if ratio <= self.UPPER_RATIO_BOUND:
             self.dynamicMarks += self.findDynamicContent(firstPage, secondPage)
             for i in range(self.comparisons):
-                response = self.requester.request(self.keyCallback)
+                response = self.requester.request(self.keyCallback)[0]
                 secondPage = response.body
                 self.dynamicMarks += self.findDynamicContent(firstPage, secondPage)
             self.cleanPage = self.removeDynamicContent(firstPage, self.dynamicMarks)

@@ -18,7 +18,8 @@
 
 class Response(object):
 
-    def __init__(self, status, reason, headers, body):
+    def __init__(self, path, status, reason, headers, body):
+        self.path = path
         self.status = status
         self.reason = reason
         self.headers = headers

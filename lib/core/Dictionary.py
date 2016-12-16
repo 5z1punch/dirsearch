@@ -20,11 +20,11 @@ import threading
 import urllib.request, urllib.parse, urllib.error
 from lib.utils.FileUtils import File
 from thirdparty.oset import *
-
+import re
 
 class Dictionary(object):
 
-    def __init__(self, path, extensions, lowercase=False, forcedExtensions=False):
+    def __init__(self, path, extensions, lowercase=False, forcedExtensions=False, recursive=False):
         self.entries = []
         self.currentIndex = 0
         self.condition = threading.Lock()
@@ -32,9 +32,9 @@ class Dictionary(object):
         self._path = path
         self._forcedExtensions = forcedExtensions
         self.lowercase = lowercase
+        self.recursive = recursive
         self.dictionaryFile = File(self.path)
         self.generate(lowercase=self.lowercase)
-
 
     @property
     def extensions(self):
@@ -62,6 +62,10 @@ class Dictionary(object):
             # Skip comments
             entry = line
             if line.lstrip().startswith("#"): continue
+            if self.recursive:
+                if '%EXT%/' in line: continue
+                pattern = re.compile(r'.+?\.(php|asp|aspx|jsp)/')
+                if pattern.match(line): continue
             if '%EXT%' in line:
                 for extension in self._extensions:
                     self.entries.append(self.quote(line.replace('%EXT%', extension)))

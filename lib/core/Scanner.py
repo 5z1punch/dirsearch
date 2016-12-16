@@ -45,7 +45,7 @@ class Scanner(object):
 
     def setup(self):
         firstPath = self.testPath + self.suffix
-        firstResponse = self.requester.request(firstPath)
+        firstResponse = self.requester.request(firstPath)[0]
         self.invalidStatus = firstResponse.status
         if self.invalidStatus == 404:
             # Using the response status code is enough :-}
@@ -53,7 +53,7 @@ class Scanner(object):
 
         # look for redirects
         secondPath = RandomUtils.randString(omit=self.testPath) + self.suffix
-        secondResponse = self.requester.request(secondPath)
+        secondResponse = self.requester.request(secondPath)[0]
         if firstResponse.status in self.redirectStatusCodes and firstResponse.redirect and secondResponse.redirect:
             self.redirectRegExp = self.generateRedirectRegExp(firstResponse.redirect, secondResponse.redirect)
 
