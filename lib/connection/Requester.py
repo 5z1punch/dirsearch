@@ -152,7 +152,7 @@ class Requester(object):
                 for response_one in response_list:
                     response_path = urlparse(response_one.url).path
                     if response_path.replace('/','') !='':
-                        result.append(Response(self.getDirPath(response_path), response_one.status_code, response_one.reason, response_one.headers, response_one.content))
+                        result.append(Response(response_path, self.getDirPath(response_path), response_one.status_code, response_one.reason, response_one.headers, response_one.content))
                 del headers
                 break
             except requests.exceptions.TooManyRedirects as e:

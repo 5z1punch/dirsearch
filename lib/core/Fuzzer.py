@@ -144,9 +144,10 @@ class Fuzzer(object):
                         status = scanResult['status']
                         response = scanResult['response']
                         result = Path(path=response.path, status=status, response=response)
+                        result_matche = Path(path=response.comPath, status=status, response=response)
                         if status is not None:
-                            if not self.searchMatches(result):
-                                self.matches.append(result)
+                            if not self.searchMatches(result_matche):
+                                self.matches.append(result_matche)
                                 for callback in self.matchCallbacks:
                                     callback(result)
                         else:

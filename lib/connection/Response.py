@@ -18,7 +18,8 @@
 
 class Response(object):
 
-    def __init__(self, path, status, reason, headers, body):
+    def __init__(self, comPath, path, status, reason, headers, body):
+        self.comPath = comPath
         self.path = path
         self.status = status
         self.reason = reason
