@@ -50,6 +50,7 @@ License: GNU General Public License, version 2
 
 Changelog
 ---------
+- xelnaga-0.1.1 - 2016.12.18 对递归深度做了限制，默认递归深度不超过 3 层，可指定为 1-10 。
 - xelnaga-0.1.0 - 2016.12.16 对跳转跟随添加了同域验证；将跳转历史 uri 和最终 uri 均加入 report 中；对扫描结果做了去重处理；对于递归扫描的目录做了去重处理；当开启递归扫描时，忽略字典中明显的 rest 风格的 uri 路径。
 - 0.3.7 - 2016.08.22 Force extensions switch added.
 - 0.3.6 - 2016.02.14 Bugfixes

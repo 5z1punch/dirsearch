@@ -129,6 +129,7 @@ class ArgumentParser(object):
             self.excludeSubdirs = None
         self.redirect = options.noFollowRedirects
         self.sameDomain = options.sameDomain
+        self.deepLevelCount = options.deepLevelCount
 
     def parseConfig(self):
         config = DefaultConfigParser()
@@ -140,6 +141,7 @@ class ArgumentParser(object):
         self.excludeStatusCodes = config.safe_get("general", "exclude-status", None)
         self.redirect = config.safe_getboolean("general", "follow-redirects", False)
         self.sameDomain = config.safe_getboolean("general", "same-domain", True)
+        self.deepLevelCount = config.safe_getint("general","deepLevelCount",3,list(range(1,10)))
         self.recursive = config.safe_getboolean("general", "recursive", False)
         self.testFailPath = config.safe_get("general", "scanner-fail-path", "").strip()
         self.saveHome = config.safe_getboolean("general", "save-logs-home", False)
@@ -206,6 +208,8 @@ class ArgumentParser(object):
                            default=None)
         general.add_option('-t', '--threads', help='Number of Threads', action='store', type='int', dest='threadsCount'
                            , default=self.threadsCount)
+        general.add_option('-d', '--deep-level', help='Number of Recursive Deep Level', action='store', type='int', dest='deepLevelCount'
+                           , default=self.deepLevelCount)
         general.add_option('-x', '--exclude-status', help='Exclude status code, separated by comma (example: 301, 500)'
                            , action='store', dest='excludeStatusCodes', default=self.excludeStatusCodes)
         general.add_option('-c', '--cookie', action='store', type='string', dest='cookie', default=None)

@@ -332,6 +332,8 @@ class Controller(object):
                 return False
             if self.currentDirectory + path in self.directories.queue:
                 return False
+            if (self.currentDirectory + path).count('/') > self.arguments.deepLevelCount:
+                return False
             self.directories.put(self.currentDirectory + path)
             return True
         else:
