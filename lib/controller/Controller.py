@@ -70,6 +70,7 @@ class Controller(object):
                 FileUtils.createDirectory(reports)
             self.savePath = savePath
         self.reportsPath = FileUtils.buildPath(self.savePath, "logs")
+        self.checkList = []
         self.blacklists = self.getBlacklists()
         self.fuzzer = None
         self.excludeStatusCodes = self.arguments.excludeStatusCodes
@@ -131,13 +132,16 @@ class Controller(object):
                 except SkipTargetInterrupt:
                     continue
                 finally:
-                    self.reportManager.save()
+                    if not self.arguments.smartCheck:
+                        self.reportManager.save()
         except KeyboardInterrupt:
             self.output.error('\nCanceled by the user')
             exit(0)
         finally:
             if not self.errorLog.closed:
                 self.errorLog.close()
+            if self.arguments.smartCheck:
+                self.reportManager.smartSave(self.arguments.showMax)
             self.reportManager.close()
 
         self.output.warning('\nTask Completed')
@@ -243,6 +247,18 @@ class Controller(object):
         if self.arguments.jsonOutputFile is not None:
             self.reportManager.addOutput(JSONReport(requester.host, requester.port, requester.protocol,
                                                     requester.basePath, self.arguments.jsonOutputFile))
+    def smartCheck(self,path):
+        flag = False
+        for checker in self.checkList:
+            if path.status==checker[0][0] and path.response.headers['content-length']==checker[0][1] and path.response.redirect == checker[0][2]:
+                if checker[1]>self.arguments.showMax:
+                    return False
+                else:
+                    checker[1]+=1
+                    return True
+        if not flag:
+            self.checkList.append([(path.status,path.response.headers['content-length'],path.response.redirect),1])
+            return True
 
     def matchCallback(self, path):
         self.index += 1
@@ -250,10 +266,13 @@ class Controller(object):
             if path.status not in self.excludeStatusCodes and (
                             self.blacklists.get(path.status) is None or path.path not in self.blacklists.get(
                         path.status)):
+                if self.arguments.smartCheck and not self.smartCheck(path):
+                    return
                 self.output.statusReport(path.path, path.response)
                 self.addDirectory(path.path)
                 self.reportManager.addPath(self.currentDirectory + path.path, path.status, path.response)
-                self.reportManager.save()
+                if not self.arguments.smartCheck:
+                    self.reportManager.save()
                 del path
 
     def notFoundCallback(self, path):

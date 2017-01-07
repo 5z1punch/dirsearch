@@ -100,6 +100,7 @@ class ArgumentParser(object):
         self.simpleOutputFile = options.simpleOutputFile
         self.plainTextOutputFile = options.plainTextOutputFile
         self.jsonOutputFile = options.jsonOutputFile
+        self.smartCheck = options.smartCheck
         self.timeout = options.timeout
         self.ip = options.ip
         self.maxRetries = options.maxRetries
@@ -145,10 +146,12 @@ class ArgumentParser(object):
         self.recursive = config.safe_getboolean("general", "recursive", False)
         self.testFailPath = config.safe_get("general", "scanner-fail-path", "").strip()
         self.saveHome = config.safe_getboolean("general", "save-logs-home", False)
+        self.showMax = config.safe_getint("general", "showMax", 5)
 
         # Reports
         self.autoSave = config.safe_getboolean("reports", "autosave-report", False)
         self.autoSaveFormat = config.safe_get("reports", "autosave-report-format", "plain", ["plain", "json", "simple"])
+        self.smartCheck = config.safe_getboolean("reports", "smartcheck-report", False)
         # Dictionary
         self.wordlist = config.safe_get("dictionary", "wordlist",
                                         FileUtils.buildPath(self.script_path, "db", "dicc.txt"))
@@ -227,6 +230,7 @@ class ArgumentParser(object):
         reports.add_option('--plain-text-report', action='store',
                            help="Found paths with status codes", dest='plainTextOutputFile', default=None)
         reports.add_option('--json-report', action='store', dest='jsonOutputFile', default=None)
+        reports.add_option('--smartcheck-report', action="store_true", dest='smartCheck', default=False,help="auto delete the same response pages, like 404 page. But this only surports the json output reports.")
         parser.add_option_group(mandatory)
         parser.add_option_group(dictionary)
         parser.add_option_group(general)

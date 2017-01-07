@@ -17,6 +17,7 @@
 #  Author: Mauro Soria
 
 import threading
+from lib.reports import *
 
 class ReportManager(object):
 
@@ -37,6 +38,31 @@ class ReportManager(object):
             for output in self.outputs:
                 output.save()
 
+    def smartSave(self,showMax):
+        with self.lock:
+            for output in self.outputs:
+                if output.__class__ is not JSONReport:
+                    output.save()
+                    continue
+                tmpPathList = []
+                checkList = []
+                for plo in output.pathList:
+                    path = plo[0]
+                    status = plo[1]
+                    contentLength = plo[2]
+                    redirect = plo[3]
+                    finded = False
+                    for check in checkList:
+                        if check[0][1]==status and check[0][2]==contentLength and check[0][3]==redirect:
+                            check[1]+=1
+                            finded = True
+                    if not finded:
+                        checkList.append([(path, status, contentLength, redirect),1])
+                for check in checkList:
+                    if check[1]<showMax:
+                        tmpPathList.append(check[0])
+                output.pathList = tmpPathList
+                output.save()
     def close(self):
         for output in self.outputs:
             output.close()
